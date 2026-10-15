@@ -1,4 +1,5 @@
 # VidyaSaarthi
+<<<<<<< HEAD
 
 A rural school support platform. It brings four everyday jobs into one place: student records, attendance, supply tracking and parent communication. It also flags students who may be falling behind and offers a multilingual study assistant.
 
@@ -85,3 +86,6 @@ This is a starter. These gaps are deliberate and worth closing first:
 ## Ideas for next steps
 
 Offline mode with a service worker and queued attendance, SMS alerts for parents without smartphones, more languages in the assistant, a timetable and homework module, and report cards as PDF.
+=======
+.
+>>>>>>> 93cd0102e96f0e8f11006847e50fe35a13f0f043
