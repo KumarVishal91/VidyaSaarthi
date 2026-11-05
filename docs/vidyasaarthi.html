@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VidyaSaarthi – Prototype</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+--bg:#ffffff;--card:#ffffff;--tx:#1b1f33;--mut:#646b85;--bd:#e3e6f0;--pri:#4f46e5;--priT:#fff;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--okb:#dcfce7;--warnb:#fef3c7;--badb:#fee2e2}
+
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+.wrap{max-width:980px;margin:0 auto;padding:14px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.brand{font-weight:800;font-size:20px}.brand span{color:var(--pri)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+h2{margin:0 0 10px;font-size:17px}h3{margin:0 0 6px;font-size:15px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat{background:#f5f6fb;border-radius:10px;padding:10px}.stat b{display:block;font-size:24px}.stat small{color:var(--mut)}
+button,select,input{font:inherit;color:var(--tx)}
+button{background:var(--pri);color:var(--priT);border:0;border-radius:9px;padding:8px 14px;cursor:pointer;font-weight:600}
+button.ghost{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+select,input{background:var(--card);border:1px solid var(--bd);border-radius:9px;padding:8px}
+.tbl{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.Low{background:var(--okb);color:var(--ok)}.Medium{background:var(--warnb);color:var(--warn)}.High{background:var(--badb);color:var(--bad)}
+.dots{display:flex;gap:3px;flex-wrap:wrap}.dots i{width:12px;height:12px;border-radius:3px;background:var(--ok)}.dots i.a{background:var(--bad)}
+.login{max-width:420px;margin:8vh auto}.login button{width:100%;margin-top:10px}.login input{width:100%;margin-top:4px}.chips{display:flex;flex-wrap:wrap;gap:6px}.chips button{width:auto;margin:0;padding:5px 10px;font-size:13px}
+.chat{height:240px;overflow-y:auto;background:#f5f6fb;border-radius:10px;padding:10px;margin-bottom:8px}
+.m{margin:6px 0;padding:7px 11px;border-radius:12px;max-width:85%;width:fit-content}.m.u{background:var(--pri);color:var(--priT);margin-left:auto}.m.b{background:var(--card);border:1px solid var(--bd)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:140px}
+#toast{position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:9;max-width:320px}
+.t{background:var(--tx);color:var(--bg);padding:10px 14px;border-radius:10px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.note{font-size:13px;color:var(--mut)}.nl p{margin:0;padding:6px 0;border-bottom:1px solid var(--bd);font-size:14px}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;background:var(--pri)}
+</style></head><body><div class="wrap" id="app"></div><div id="toast"></div>
+<script>
+// ---------- seeded demo data (mirrors VS-2401 … VS-2412) ----------
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const names=["Aarav Sharma","Diya Verma","Rohan Patel","Ananya Singh","Kabir Yadav","Meera Joshi","Ishaan Gupta","Priya Mishra","Arjun Tiwari","Saanvi Rao","Vivaan Khan","Neha Chouhan"];
+const prof=[[.95,68,4],[.97,82,3],[.72,45,-10],[.9,74,0],[.8,52,-6],[.96,88,2],[.65,38,-12],[.93,70,-2],[.84,60,-9],[.98,91,1],[.78,57,-4],[.92,66,3]];
+const subs=["Maths","Science","English","Hindi"];
+const S=names.map((n,i)=>{const [p,m,tr]=prof[i];return{id:i+1,name:n,adm:"VS-"+(2401+i),
+att:Array.from({length:20},(_,d)=>d==19?1:(rnd()<p?1:0)),
+marks:Object.fromEntries(subs.map(s=>{const b=Math.max(15,Math.min(98,m+Math.round((rnd()-.5)*14)));return[s,[b-Math.round(tr/2),b+Math.round(tr/2)]]}))}});
+const users={principal:{role:"admin",name:"Principal"},sunita:{role:"teacher",name:"Ms. Sunita"},aarav:{role:"student",name:"Aarav",sid:1},dinesh:{role:"parent",name:"Mr. Dinesh",sid:1}};
+const stock=[["Notebooks",120,50],["Chalk boxes",14,20],["Textbooks (Class 8)",60,40],["Mid-day meal grain (kg)",35,100],["First-aid kits",3,2]];
+const notes=[],msgs=[];let me=null,draft={},tab="",tSid=1,q2="";
+const G=["Dinesh Sharma","Rajesh Verma","Mahesh Patel","Sunil Singh","Ramesh Yadav","Anil Joshi","Vijay Gupta","Suresh Mishra","Manoj Tiwari","Prakash Rao","Imran Khan","Kailash Chouhan"];
+// ---------- early-warning risk scoring (same idea as server/src/risk.js) ----------
+const avgM=s=>{const a=Object.values(s.marks).flat();return a.reduce((x,y)=>x+y,0)/a.length};
+const trend=s=>{const v=Object.values(s.marks);return v.reduce((a,m)=>a+m[1]-m[0],0)/v.length};
+function risk(s){const pres=s.att.reduce((a,b)=>a+b,0),pct=pres/20*100,avg=avgM(s),tr=trend(s);let sc=0,why=[];
+ if(pct<75){sc+=40;why.push(`Attendance is only ${pct.toFixed(0)}% in the last 20 school days`)}else if(pct<85){sc+=20;why.push(`Attendance is ${pct.toFixed(0)}%, below the 85% target`)}
+ if(avg<40){sc+=40;why.push(`Average marks are low (${avg.toFixed(0)}%)`)}else if(avg<55){sc+=20;why.push(`Average marks are ${avg.toFixed(0)}%, needs support`)}
+ if(tr<-8){sc+=20;why.push("Marks dropped sharply between the two tests")}else if(tr<-3){sc+=10;why.push("Marks are trending downward")}
+ if(s.att.slice(-3).every(x=>!x)){sc+=10;why.push("Absent for 3 days in a row")}
+ return{sc,pct,avg,level:sc>=50?"High":sc>=25?"Medium":"Low",why}}
+const rank={Low:0,Medium:1,High:2};
+// ---------- notifications (stand-in for Socket.IO rooms) ----------
+function notify(to,msg){notes.unshift({to,msg,t:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})});
+ const mine=to==="role:"+me.role||(me.role==="parent"&&to==="parent:"+me.sid);if(mine)toast(msg)}
+function toast(m){const e=document.createElement("div");e.className="t";e.textContent="🔔 "+m;document.getElementById("toast").append(e);setTimeout(()=>e.remove(),4500)}
+const myNotes=()=>notes.filter(n=>n.to==="role:"+me.role||(me.role==="parent"&&n.to==="parent:"+me.sid));
+// ---------- views ----------
+const $=id=>document.getElementById(id);
+const pill=l=>`<span class="pill ${l}">${l} risk</span>`;
+const dots=s=>`<div class="dots">${s.att.map(x=>`<i class="${x?"":"a"}" title="${x?"Present":"Absent"}"></i>`).join("")}</div>`;
+function shell(body){return`<header><div class="brand">🎓 Vidya<span>Saarthi</span></div><div class="row"><span class="note">${me.name} · ${me.role}</span>
+<select id="sw" aria-label="Switch role">${Object.entries(users).map(([k,u])=>`<option value="${k}" ${u===me?"selected":""}>Switch to ${u.role}</option>`).join("")}</select>
+<button class="ghost" onclick="me=null;render()">Log out</button></div></header>${body}${transCard()}`}
+function notesCard(){const n=myNotes();return`<div class="card"><h2>🔔 Notifications</h2><div class="nl">${n.length?n.map(x=>`<p><b>${x.t}</b> · ${x.msg}</p>`).join(""):'<p class="note">No alerts yet. Try marking a student absent from the teacher view.</p>'}</div></div>`}
+function stats(list){const hi=list.filter(s=>risk(s).level==="High").length,me2=list.filter(s=>risk(s).level==="Medium").length;
+ const ap=list.reduce((a,s)=>a+risk(s).pct,0)/list.length;
+ return`<div class="grid"><div class="stat"><b>${list.length}</b><small>Students (Class 8-A)</small></div><div class="stat"><b>${ap.toFixed(0)}%</b><small>Avg attendance (20 days)</small></div><div class="stat"><b style="color:var(--bad)">${hi}</b><small>High risk</small></div><div class="stat"><b style="color:var(--warn)">${me2}</b><small>Medium risk</small></div></div>`}
+function warnTable(){const l=S.map(s=>({s,r:risk(s)})).filter(x=>x.r.level!=="Low").sort((a,b)=>b.r.sc-a.r.sc);
+ return`<div class="card"><h2>🚨 Early-warning list</h2><div class="tbl"><table><tr><th>Student</th><th>Level</th><th>Score</th><th>Why flagged</th></tr>${l.map(x=>`<tr><td>${x.s.name}</td><td>${pill(x.r.level)}</td><td>${x.r.sc}</td><td style="white-space:normal">${x.r.why.join("; ")}</td></tr>`).join("")||'<tr><td colspan=4>No students flagged 🎉</td></tr>'}</table></div></div>`}
+function teacher(){S.forEach(s=>{if(!(s.id in draft))draft[s.id]=s.att[19]});
+ return shell(`${stats(S)}
+<div class="card" style="margin-top:14px"><h2>📋 Today's attendance — Class 8-A</h2><div class="tbl"><table><tr><th>Adm. no.</th><th>Name</th><th>Present today</th><th>Last 20 days</th><th>Risk</th></tr>
+${S.map(s=>`<tr><td>${s.adm}</td><td>${s.name}</td><td><input type="checkbox" ${draft[s.id]?"checked":""} onchange="draft[${s.id}]=this.checked?1:0" aria-label="Present ${s.name}"></td><td>${dots(s)}</td><td>${pill(risk(s).level)}</td></tr>`).join("")}</table></div>
+<p><button onclick="saveAtt()">Save attendance &amp; notify parents</button></p></div>${warnTable()}${recCard(false)}${msgCard()}${notesCard()}`)}
+function saveAtt(){let n=0;S.forEach(s=>{const old=s.att[19],nw=draft[s.id],before=risk(s).level;s.att[19]=nw;const after=risk(s).level;
+ if(old&&!nw){n++;notify("parent:"+s.id,`${s.name} was marked absent today.`)}
+ if(rank[after]>rank[before]){notify("role:teacher",`${s.name} moved to ${after} risk.`);notify("role:admin",`${s.name} moved to ${after} risk.`)}});
+ if(!n)toast("Attendance saved. No new absences.");render()}
+function admin(){return shell(`${stats(S)}${warnTable()}
+<div class="card"><h2>📦 School resources</h2><div class="tbl"><table><tr><th>Item</th><th>In stock</th><th>Minimum</th><th>Update</th><th>Status</th></tr>${stock.map((r,i)=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td><button class="ghost" onclick="stk(${i},-1)">-1</button> <button class="ghost" onclick="stk(${i},1)">+1</button> <button class="ghost" onclick="stk(${i},10)">+10</button></td><td>${r[1]<r[2]?'<span class="pill High">Reorder</span>':'<span class="pill Low">OK</span>'}</td></tr>`).join("")}</table></div><div class="row" style="margin-top:10px"><input id="ri" placeholder="New item"><input id="rq" type="number" placeholder="Qty" style="max-width:90px"><input id="rm" type="number" placeholder="Min" style="max-width:90px"><button onclick="addRes()">Add item</button></div></div>${recCard(true)}${notesCard()}`)}
+function marksTable(s){return`<div class="tbl"><table><tr><th>Subject</th><th>Test 1</th><th>Test 2</th></tr>${subs.map(x=>`<tr><td>${x}</td><td>${s.marks[x][0]}</td><td>${s.marks[x][1]}</td></tr>`).join("")}</table></div>`}
+function parent(){const s=S[me.sid-1],r=risk(s);
+ return shell(`<div class="card"><h2>${s.name}'s progress</h2><div class="grid"><div class="stat"><b>${r.pct.toFixed(0)}%</b><small>Attendance (20 days)</small></div><div class="stat"><b>${r.avg.toFixed(0)}%</b><small>Average marks</small></div><div class="stat"><b>${pill(r.level)}</b><small>Early-warning status</small></div></div></div>
+<div class="card"><h3>In simple words</h3><p>${r.level==="Low"?"Your child is doing well. Keep encouraging regular attendance.":"Your child may need some extra attention: "+r.why.join("; ")+". Please talk to the class teacher."}</p><div class="bar"><i style="width:${r.pct}%"></i></div></div>
+<div class="card"><h3>Attendance, last 20 days <span class="note">(red = absent)</span></h3>${dots(s)}</div><div class="card"><h3>Marks</h3>${marksTable(s)}</div>${msgCard()}${notesCard()}`)}
+// ---------- Saarthi assistant (offline fallback, as in the real app without an API key) ----------
+const KB=[[/photosynth|प्रकाश/i,"Photosynthesis is how plants make food using sunlight, water and carbon dioxide. They release oxygen. 🌱","प्रकाश संश्लेषण में पौधे सूर्य के प्रकाश, पानी और कार्बन डाइऑक्साइड से अपना भोजन बनाते हैं और ऑक्सीजन छोड़ते हैं। 🌱"],
+[/fraction|भिन्न/i,"A fraction shows part of a whole. In 3/4, the 4 is the total equal parts and the 3 is the parts we take.","भिन्न किसी पूर्ण का भाग दिखाती है। 3/4 में 4 कुल बराबर भाग हैं और 3 वे भाग जो हम लेते हैं।"],
+[/gravity|गुरुत्व/i,"Gravity is the force that pulls objects towards the Earth. That is why a dropped ball falls down. 🍎","गुरुत्वाकर्षण वह बल है जो वस्तुओं को पृथ्वी की ओर खींचता है, इसीलिए गिराई गई गेंद नीचे गिरती है। 🍎"],
+[/water cycle|जल चक्र/i,"The water cycle: water evaporates, forms clouds (condensation), falls as rain (precipitation) and flows back to rivers and seas. 💧","जल चक्र: पानी वाष्पित होता है, बादल बनते हैं, वर्षा होती है और पानी वापस नदियों व समुद्र में जाता है। 💧"],
+[/noun|संज्ञा/i,"A noun is a word that names a person, place, thing or idea, like 'teacher', 'Indore' or 'book'.","संज्ञा वह शब्द है जो किसी व्यक्ति, स्थान, वस्तु या भाव का नाम बताता है, जैसे 'शिक्षक', 'इंदौर', 'किताब'।"]];
+function ask(){const q=$("q").value.trim();if(!q)return;const hi=$("lang").value==="hi",c=$("chat");
+ c.insertAdjacentHTML("beforeend",'<div class="m u"></div>');c.lastChild.textContent=q;$("q").value="";
+ const hit=KB.find(k=>k[0].test(q));const a=hit?(hi?hit[2]:hit[1]):(hi?"मैं अभी डेमो मोड में हूँ। आज़माएँ: प्रकाश संश्लेषण, भिन्न, गुरुत्व, जल चक्र, संज्ञा।":"I'm in demo mode. Try: photosynthesis, fraction, gravity, water cycle, noun. (The real app sends this to the Claude API.)");
+ c.insertAdjacentHTML("beforeend",'<div class="m b"></div>');c.lastChild.textContent=a;c.scrollTop=c.scrollHeight}
+function student(){const s=S[me.sid-1],r=risk(s);
+ return shell(`<div class="card"><h2>Hello ${s.name.split(" ")[0]} 👋</h2><div class="grid"><div class="stat"><b>${r.pct.toFixed(0)}%</b><small>Attendance</small></div><div class="stat"><b>${r.avg.toFixed(0)}%</b><small>Average marks</small></div><div class="stat"><b>${s.adm}</b><small>Admission no.</small></div></div></div>
+<div class="card"><h3>Attendance, last 20 days</h3>${dots(s)}</div><div class="card"><h3>My marks</h3>${marksTable(s)}</div>
+<div class="card"><h2>🤖 Saarthi – ask me anything</h2><div class="chat" id="chat"><div class="m b">Namaste! I can help in English or Hindi. नमस्ते! मुझसे कुछ भी पूछें।</div></div>
+<div class="row"><select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option></select><input id="q" placeholder="e.g. What is photosynthesis?" onkeydown="if(event.key==='Enter')ask()"><button onclick="ask()">Ask</button></div></div>`)}
+function login(){return`<div class="card login"><div class="brand" style="font-size:26px">🎓 Vidya<span>Saarthi</span></div><p class="note">AI-powered rural school support platform. Prototype with demo data. Pick a role:</p>
+${Object.entries(users).map(([k,u])=>`<button onclick="go('${k}')">${{admin:"🏫",teacher:"👩‍🏫",student:"👨‍🎓",parent:"👨‍👩‍👦"}[u.role]} ${u.role[0].toUpperCase()+u.role.slice(1)} · ${k}@demo.in</button>`).join("")}</div>`}
+function go(k){me=users[k];render()}
+function loginForm(){const ic={admin:"Admin",teacher:"Teacher",student:"Student",parent:"Parent"};return`<div class="card login"><div class="brand" style="font-size:26px">Vidya<span>Saarthi</span></div><p class="note">One platform for student records, attendance, resources and parent communication. Sign in to continue.</p>
+<form onsubmit="return doLogin(event)"><label class="note" for="em">Email</label><input id="em" type="email" placeholder="you@demo.in" autocomplete="username"><label class="note" for="pw" style="display:block;margin-top:8px">Password</label><input id="pw" type="password" placeholder="Password" autocomplete="current-password"><p id="err" class="note" style="color:var(--bad);margin:6px 0 0"></p><button type="submit">Sign in</button></form>
+<p class="note" style="margin-top:16px">Demo accounts (password: demo1234). Tap to fill:</p><div class="chips">${Object.entries(users).map(([k,u])=>`<button type="button" class="ghost" onclick="fillDemo('${k}')">${ic[u.role]}</button>`).join("")}</div></div>`}
+const PH=[["good morning","सुप्रभात"],["how are you","आप कैसे हैं"],["thank you","धन्यवाद"],["what is your name","आपका नाम क्या है"],["my name is","मेरा नाम है"],["i am going to school","मैं स्कूल जा रहा हूँ"],["please help me","कृपया मेरी मदद कीजिए"],["i do not understand","मुझे समझ नहीं आया"],["i have a question","मेरा एक प्रश्न है"],["my child is absent today","मेरा बच्चा आज अनुपस्थित है"],["the teacher is in the class","शिक्षक कक्षा में हैं"]];
+const WD=[["hello","नमस्ते"],["school","स्कूल"],["teacher","शिक्षक"],["student","विद्यार्थी"],["book","किताब"],["water","पानी"],["today","आज"],["tomorrow","कल"],["yes","हाँ"],["no","नहीं"],["i","मैं"],["you","आप"],["is","है"],["am","हूँ"],["my","मेरा"],["child","बच्चा"],["parent","माता-पिता"],["class","कक्षा"],["homework","गृहकार्य"],["exam","परीक्षा"],["marks","अंक"],["attendance","उपस्थिति"],["absent","अनुपस्थित"],["present","उपस्थित"],["good","अच्छा"],["help","मदद"],["question","प्रश्न"],["answer","उत्तर"],["mother","माँ"],["father","पिता"],["friend","दोस्त"],["read","पढ़ना"],["write","लिखना"],["learn","सीखना"],["name","नाम"],["thanks","धन्यवाद"],["please","कृपया"],["and","और"],["in","में"],["go","जाना"],["come","आना"],["food","खाना"],["what","क्या"],["how","कैसे"]];
+const norm=t=>t.toLowerCase().replace(/[।?.,!]/g,"").replace(/\s+/g," ").trim();
+function tr(text,dir){const t=norm(text);if(!t)return"";const f=dir==="hi2en"?1:0,g=1-f;const ph=PH.find(p=>norm(p[f])===t);if(ph)return ph[g];const m=new Map(WD.map(w=>[norm(w[f]),w[g]]));return t.split(" ").map(w=>m.has(w)?m.get(w):"["+w+"]").join(" ")}
+function transCard(){return`<div class="card"><h2>🔤 Hindi ⇄ English translator</h2><div class="row"><select id="tdir" aria-label="Direction"><option value="hi2en">Hindi → English</option><option value="en2hi">English → Hindi</option></select><button class="ghost" type="button" onclick="swapT()">⇄ Swap</button></div><textarea id="tin" rows="3" placeholder="Type Hindi or English text here" style="width:100%;margin-top:8px;font:inherit;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:9px;padding:8px"></textarea><div class="row" style="margin-top:8px"><button type="button" onclick="doT()">Translate</button><button class="ghost" type="button" onclick="fillT('आप कैसे हैं','hi2en')">Example: Hindi</button><button class="ghost" type="button" onclick="fillT('please help me','en2hi')">Example: English</button></div><div class="m b" id="tout" style="margin-top:8px;min-height:38px;width:auto;max-width:100%">Translation appears here.</div><p class="note">Prototype uses a built-in phrase and word dictionary. Words it does not know appear in [brackets]. The full app would use the Claude API for complete translation.</p></div>`}
+function doT(){$("tout").textContent=tr($("tin").value,$("tdir").value)||"Please type something to translate."}
+function fillT(x,d){$("tdir").value=d;$("tin").value=x;doT()}
+function swapT(){const d=$("tdir"),o=$("tout").textContent;d.value=d.value==="hi2en"?"en2hi":"hi2en";if(o&&!o.startsWith("Translation appears")&&!o.startsWith("Please type"))$("tin").value=o;doT()}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function stk(i,d){const r=stock[i],was=r[1]>=r[2];r[1]=Math.max(0,r[1]+d);if(was&&r[1]<r[2])notify("role:admin",r[0]+" is below minimum stock. Reorder needed.");render()}
+function addRes(){const n=$("ri").value.trim();if(!n){toast("Enter an item name");return}stock.push([n,+$("rq").value||0,+$("rm").value||0]);toast(n+" added to inventory");render()}
+function recTable(){const q=q2.toLowerCase();return`<div class="tbl"><table><tr><th>Adm. no.</th><th>Name</th><th>Guardian</th><th>Attendance</th><th>Avg marks</th><th>Risk</th></tr>${S.map((s,i)=>({s,i})).filter(x=>(x.s.name+x.s.adm).toLowerCase().includes(q)).map(x=>{const r=risk(x.s);return`<tr><td>${x.s.adm}</td><td>${x.s.name}</td><td>${G[x.i]}</td><td>${r.pct.toFixed(0)}%</td><td>${r.avg.toFixed(0)}%</td><td>${pill(r.level)}</td></tr>`}).join("")}</table></div>`}
+function recCard(add){return`<div class="card"><h2>🗂️ Student records</h2><input placeholder="Search name or admission no." value="${esc(q2)}" oninput="q2=this.value;$('rec').innerHTML=recTable()" style="width:100%;margin-bottom:8px"><div id="rec">${recTable()}</div>${add?`<div class="row" style="margin-top:10px"><input id="ns" placeholder="Student name"><input id="ng" placeholder="Guardian name"><button onclick="addStu()">Add student</button></div>`:""}</div>`}
+function addStu(){const n=$("ns").value.trim();if(!n){toast("Enter a student name");return}S.push({id:S.length+1,name:n,adm:"VS-"+(2401+S.length),att:Array(20).fill(1),marks:Object.fromEntries(subs.map(x=>[x,[60,60]]))});G.push($("ng").value.trim()||"Not set");toast(n+" added");render()}
+function msgCard(){const isT=me.role==="teacher",sid=isT?tSid:me.sid,th=msgs.filter(m=>m.sid===sid);return`<div class="card"><h2>💬 Parent–teacher messages</h2>${isT?`<select onchange="tSid=+this.value;render()" aria-label="Student">${S.map(s=>`<option value="${s.id}" ${s.id===sid?"selected":""}>Parent of ${s.name}</option>`).join("")}</select>`:`<p class="note">Chat with the class teacher, Ms. Sunita</p>`}<div class="chat" id="mc" style="margin-top:8px">${th.map(m=>`<div class="m ${m.from===me.role?"u":"b"}">${esc(m.text)}<br><small>${m.t}</small></div>`).join("")||'<p class="note">No messages yet.</p>'}</div><div class="row"><input id="mi" placeholder="Type a message" onkeydown="if(event.key==='Enter')sendMsg()"><button onclick="sendMsg()">Send</button></div></div>`}
+function sendMsg(){const t=$("mi").value.trim();if(!t)return;const isT=me.role==="teacher",sid=isT?tSid:me.sid;msgs.push({sid,from:me.role,text:t,t:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})});if(isT)notify("parent:"+sid,"New message from Ms. Sunita.");else notify("role:teacher","New message from the parent of "+S[sid-1].name+".");render();const c=$("mc");if(c)c.scrollTop=c.scrollHeight}
+function jwtCard(){const k=Object.keys(users).find(x=>users[x]===me),b=o=>btoa(JSON.stringify(o)).replace(/=/g,""),now=Math.floor(Date.now()/1000),p={sub:k+"@demo.in",role:me.role,iat:now,exp:now+7*86400},perms={admin:"all students, resources, early-warning, student records",teacher:"class roster, attendance, messages, early-warning",parent:"own child's records, messages, alerts",student:"own records, Saarthi assistant, translator"};return`<div class="card"><h2>🔐 Secure session (JWT + role-based access)</h2><p class="note">Demo token, stored in an HTTP-only cookie in the real app. <b>Socket.IO: connected</b> to rooms for your role.</p><pre style="white-space:pre-wrap;word-break:break-all;background:#f5f6fb;padding:8px;border-radius:8px;font-size:12px;margin:0">${b({alg:"HS256",typ:"JWT"})}.${b(p)}.demo-signature</pre><p class="note">Decoded payload: ${JSON.stringify(p)}</p><p class="note"><b>${me.role}</b> can access: ${perms[me.role]}</p></div>`}
+function fillDemo(k){$("em").value=k+"@demo.in";$("pw").value="demo1234";$("err").textContent=""}
+function doLogin(e){e.preventDefault();const em=$("em").value.trim().toLowerCase(),k=em.replace("@demo.in","");if(em.endsWith("@demo.in")&&users[k]&&$("pw").value==="demo1234"){go(k)}else{$("err").textContent="Invalid email or password."}return false}
+function render(){const v=!me?loginForm():{admin,teacher,parent,student}[me.role]();$("app").innerHTML=v;
+ const sw=$("sw");if(sw)sw.onchange=e=>go(e.target.value)}
+render();
+</script></body></html>
